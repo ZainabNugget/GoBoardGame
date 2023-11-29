@@ -1,9 +1,8 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget, QGridLayout
 from PyQt6.QtCore import Qt
 
 from board import Board
 from score_board import ScoreBoard
-
 
 class Go(QMainWindow):
 
@@ -19,6 +18,7 @@ class Go(QMainWindow):
 
     def initUI(self):
         '''Initiates application UI'''
+        self.addToolBarBreak()
         self.board = Board(self)
         self.setCentralWidget(self.board)
 
