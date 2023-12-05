@@ -9,6 +9,9 @@ class Go(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
+        # self.setStyleSheet('''
+        #     background-color: rgb(156, 114, 51);
+        # ''')
 
     def getBoard(self):
         return self.board
@@ -20,6 +23,7 @@ class Go(QMainWindow):
         '''Initiates application UI'''
         self.addToolBarBreak()
         self.board = Board(self)
+        grid = QGridLayout()
         self.setCentralWidget(self.board)
 
         self.scoreBoard = ScoreBoard()
