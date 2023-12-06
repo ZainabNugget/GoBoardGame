@@ -1,5 +1,7 @@
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QToolBar
 from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget, QGridLayout
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 
 from board import Board
 from score_board import ScoreBoard
@@ -9,9 +11,6 @@ class Go(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
-        # self.setStyleSheet('''
-        #     background-color: rgb(156, 114, 51);
-        # ''')
 
     def getBoard(self):
         return self.board
@@ -23,18 +22,22 @@ class Go(QMainWindow):
         '''Initiates application UI'''
         self.addToolBarBreak()
         self.board = Board(self)
-        grid = QGridLayout()
         self.setCentralWidget(self.board)
 
         self.scoreBoard = ScoreBoard()
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.scoreBoard)
         self.scoreBoard.make_connection(self.board)
 
+        self.createStatusBar()
+
         self.resize(800, 800)
         self.center()
         self.setWindowTitle('Go')
         self.show()
 
+    def createStatusBar(self):
+        statusbar = self.statusBar()
+        statusbar.showMessage('Ready')  # Initial status message
 
     def center(self):
         '''Centers the window on the screen'''

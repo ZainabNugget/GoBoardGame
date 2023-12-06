@@ -3,6 +3,7 @@ from PyQt6.QtCore import QTimer, pyqtSignal, QPoint
 from PyQt6.QtGui import QPainter, QColor, QBrush, QMouseEvent
 from PyQt5.QtCore import Qt
 from piece import Piece
+from game_logic import GameLogic
 
 
 class Board(QFrame):  # base the board on a QFrame widget
@@ -15,6 +16,9 @@ class Board(QFrame):  # base the board on a QFrame widget
     counter = 10  # the number the counter will count down from
     posX = 0
     posY = 0
+
+    # Init game logic object
+    gameLogic = GameLogic()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -29,8 +33,10 @@ class Board(QFrame):  # base the board on a QFrame widget
 
         # TODO - create a 2d int/Piece array to store the state of the game
         rows, cols = (self.boardWidth, self.boardHeight)
-        self.boardArray = [[0] * cols] * rows
+        self.boardArray = [[Piece.NoPiece] * cols for _ in range(rows)]
         self.printBoardArray()    # TODO - uncomment this method after creating the array above
+        print(self.gameLogic.update(self.boardArray, self.posX, self.posY))
+        # print(self.gameLogic.checkEmpty())
 
     def printBoardArray(self):
         '''prints the boardArray in an attractive way'''
@@ -77,7 +83,7 @@ class Board(QFrame):  # base the board on a QFrame widget
         painter = QPainter(self)
         self.drawBoardSquares(painter)
         self.drawPieces(painter)
-        # self.placePiece(painter)
+        self.placePiece(painter)
 
     def mousePressEvent(self, event:QMouseEvent):
         '''this event is automatically called when the mouse is pressed'''
@@ -145,10 +151,12 @@ class Board(QFrame):  # base the board on a QFrame widget
                     painter.translate(colTransformation, rowTransformation)
                     color = QColor(0, 0, 0)  # set the color is unspecified
 
+                    print("The array is :", self.boardArray[col][row])
+
                     if self.boardArray[col][row] == Piece.NoPiece:  # if piece in array == 0
                         color = QColor(Qt.transparent)  # color is transparent
 
-                    elif self.boardArray[col][row]== Piece.White:  # if piece in array == 1
+                    elif self.boardArray[col][row] == Piece.White:  # if piece in array == 1
                         color = QColor(Qt.white)  # set color to white
 
                     elif self.boardArray[col][row] == Piece.Black:  # if piece in array == 2
@@ -168,7 +176,6 @@ class Board(QFrame):  # base the board on a QFrame widget
     def placePiece(self,painter):
         # Calculate the radius of the circle
         radius = min(self.squareWidth(), self.squareHeight()) / 4
-
         # Draw the circle on top of the top-left corner of the box
         painter.setBrush(QBrush(QColor(255, 0, 0)))  # Set brush color to red (you can choose your color)
         painter.drawEllipse(int(self.posX), int(self.posY), int(2 * radius), int(2 * radius))
