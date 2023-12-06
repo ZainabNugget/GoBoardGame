@@ -1,9 +1,8 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget
+from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget, QStatusBar
 from PyQt6.QtCore import Qt
 
 from board import Board
 from score_board import ScoreBoard
-
 
 class Go(QMainWindow):
 
@@ -18,7 +17,6 @@ class Go(QMainWindow):
         return self.scoreBoard
 
     def initUI(self):
-        '''Initiates application UI'''
         self.board = Board(self)
         self.setCentralWidget(self.board)
 
@@ -26,20 +24,20 @@ class Go(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.scoreBoard)
         self.scoreBoard.make_connection(self.board)
 
+        self.createStatusBar()  # Added this line to create a status bar
+
         self.resize(800, 800)
-        # self.setFixedSize(200, 200)
         self.center()
         self.setWindowTitle('Go')
         self.show()
-        
+
+    def createStatusBar(self):
+        statusbar = self.statusBar()
+        statusbar.showMessage('Ready')  # Initial status message
+
     def center(self):
-        '''Centers the window on the screen'''
         screen = QApplication.primaryScreen().availableGeometry()
         size = self.geometry()
         x = (screen.width() - size.width()) // 2
         y = (screen.height() - size.height()) // 2
         self.move(x, y)
-
-
-
-
