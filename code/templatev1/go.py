@@ -26,7 +26,7 @@ class Go(QMainWindow):
 
         self.createStatusBar()  # Added this line to create a status bar
 
-        self.resize(800, 800)
+        self.resize(700, 700)
         self.center()
         self.setWindowTitle('Go')
         self.show()
