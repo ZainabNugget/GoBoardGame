@@ -1,5 +1,7 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget, QStatusBar
-from PyQt6.QtCore import Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QAction, QToolBar
+from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget, QGridLayout
+from PyQt6.QtCore import Qt, QSize
 
 from board import Board
 from score_board import ScoreBoard
@@ -25,7 +27,6 @@ class Go(QMainWindow):
         self.scoreBoard.make_connection(self.board)
 
         self.createStatusBar()  # Added this line to create a status bar
-
         self.resize(700, 700)
         self.center()
         self.setWindowTitle('Go')

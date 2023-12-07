@@ -3,6 +3,7 @@ from PyQt6.QtCore import QTimer, pyqtSignal, QPoint
 from PyQt6.QtGui import QPainter, QColor, QBrush, QMouseEvent
 from PyQt5.QtCore import Qt
 from piece import Piece
+from game_logic import GameLogic
 
 
 class Board(QFrame):  # base the board on a QFrame widget
@@ -12,9 +13,12 @@ class Board(QFrame):  # base the board on a QFrame widget
     boardWidth = 7  # board is 0 squares wide # TODO this needs updating
     boardHeight = 7  #
     timerSpeed = 1000  # the timer updates every 1 second
-    counter = 10  # the number the counter will count down from
+    counter = 20  # the number the counter will count down from
     posX = 0
     posY = 0
+
+    # Init game logic object
+    gameLogic = GameLogic()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -29,8 +33,10 @@ class Board(QFrame):  # base the board on a QFrame widget
 
         # TODO - create a 2d int/Piece array to store the state of the game
         rows, cols = (self.boardWidth, self.boardHeight)
-        self.boardArray = [[0] * cols] * rows
+        self.boardArray = [[Piece.NoPiece] * cols for _ in range(rows)]
         self.printBoardArray()    # TODO - uncomment this method after creating the array above
+        self.gameLogic.boardArray = self.boardArray
+        # print(self.gameLogic.checkEmpty())
 
     def printBoardArray(self):
         '''prints the boardArray in an attractive way'''
@@ -77,7 +83,7 @@ class Board(QFrame):  # base the board on a QFrame widget
         painter = QPainter(self)
         self.drawBoardSquares(painter)
         self.drawPieces(painter)
-        # self.placePiece(painter)
+        self.placePiece(painter)
 
     def mousePressEvent(self, event:QMouseEvent):
         '''this event is automatically called when the mouse is pressed'''
@@ -101,7 +107,11 @@ class Board(QFrame):  # base the board on a QFrame widget
 
     def tryMove(self, newX, newY):
         '''tries to move a piece'''
-        pass  # Implement this method according to your logic
+        if(self.gameLogic.checkEmpty(newX, newY)):
+            self.gameLogic.updateTurn()
+            return True
+        else:  # Implement this method according to your logic
+            return False
 
     def drawBoardSquares(self, painter):
         '''draw all the square on the board'''
@@ -146,21 +156,19 @@ class Board(QFrame):  # base the board on a QFrame widget
                     colTransformation = self.squareWidth() * col
                     rowTransformation = self.squareHeight() * row
                     painter.translate(colTransformation, rowTransformation)
-                    color = QColor(0, 0, 0)  # set the color is unspecified
+                    color = QColor(Qt.transparent)  # set the color is unspecified
 
                     if self.boardArray[col][row] == Piece.NoPiece:  # if piece in array == 0
-                        color = QColor(Qt.transparent)  # color is transparent
-
-                    elif self.boardArray[col][row]== Piece.White:  # if piece in array == 1
-                        color = QColor(Qt.white)  # set color to white
-
-                    elif self.boardArray[col][row] == Piece.Black:  # if piece in array == 2
-                        color = QColor(Qt.black)  # set color to black
+                        color = QColor(0,20,20)  # color is transparent
+                    elif self.boardArray[col][row] == Piece.White:  # if piece in array == 1
+                        color = QColor(255,255,255)  # set color to white
+                    # if self.boardArray[col][row] == Piece.Black:  # if piece in array == 2
+                    #     color = QColor(0,0,0)  # set color to black
 
                     painter.setPen(color)  # set pen color to painter
                     painter.setBrush(color)  # set brush color to painter
                     painter.translate(self.squareWidth(), self.squareHeight())
-                    radius = int((self.squareWidth() - 2) / 2)
+                    radius = int((40 - 2) / 2)
                     center = QPoint(col, row)
                     if (row == Board.boardWidth or col == Board.boardHeight):
                         pass
@@ -172,6 +180,18 @@ class Board(QFrame):  # base the board on a QFrame widget
         # Calculate the radius of the circle
         radius = min(self.squareWidth(), self.squareHeight()) / 4
 
+        col =int(self.posX/self.squareWidth())
+        row =int(self.posY/self.squareHeight())
         # Draw the circle on top of the top-left corner of the box
-        painter.setBrush(QBrush(QColor(255, 0, 0)))  # Set brush color to red (you can choose your color)
-        painter.drawEllipse(int(self.posX), int(self.posY), int(2 * radius), int(2 * radius))
+
+        colTransformation = self.squareWidth() * col
+        rowTransformation = self.squareHeight() * row
+        painter.translate(col, row)
+        painter.setBrush(QBrush(QColor(255, 255, 255)))  # Set brush color to red (you can choose your color)
+        center = QPoint(int(colTransformation), int(rowTransformation))
+
+        if(self.tryMove(col, row)):
+            painter.drawEllipse(center, int(2 * radius), int(2 * radius))
+            self.boardArray[col-1][row-1] = Piece.White
+            self.printBoardArray()
+            self.drawPieces(painter)
