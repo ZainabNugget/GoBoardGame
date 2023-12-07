@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QFrame
+from PyQt6.QtWidgets import QFrame, QMessageBox
 from PyQt6.QtCore import QTimer, pyqtSignal, QPoint
 from PyQt6.QtGui import QPainter, QColor, QBrush, QMouseEvent
 from PyQt5.QtCore import Qt
@@ -56,20 +56,20 @@ class Board(QFrame):  # base the board on a QFrame widget
         '''returns the height of one square of the board'''
         return self.contentsRect().height() / 8
 
+    def timerEvent(self):
+        if self.counter == 0:
+            self.endGame()
+        else:
+            self.counter -= 1
+            print('timerEvent()', self.counter)
+            self.updateTimerSignal.emit(self.counter)
+
     def start(self):
         '''starts game'''
-        self.isStarted = True  # set the boolean which determines if the game has started to TRUE
-        self.resetGame()  # reset the game
-        self.timer.start(self.timerSpeed)  # start the timer with the correct speed
+        self.isStarted = True
+        self.resetGame()
+        self.timer.start(self.timerSpeed)
         print("start () - timer is started")
-
-    def timerEvent(self):
-        '''this event is automatically called when the timer is updated. based on the timerSpeed variable '''
-        # TODO adapt this code to handle your timers
-        if Board.counter == 0:
-            print("Game over")
-        self.counter -= 1
-        print('timerEvent()', self.counter)
         self.updateTimerSignal.emit(self.counter)
 
     def paintEvent(self, event):
@@ -90,6 +90,11 @@ class Board(QFrame):  # base the board on a QFrame widget
         # TODO you could call some game logic here
         self.clickLocationSignal.emit(clickLoc)
 
+    def endGame(self):
+        self.isStarted = False
+        self.timer.stop()
+        QMessageBox.information(self, "Game Over", "Time's up! Game over.")
+
     def resetGame(self):
         '''clears pieces from the board'''
         # TODO write code to reset game
@@ -108,7 +113,6 @@ class Board(QFrame):  # base the board on a QFrame widget
         for row in range(1, Board.boardHeight+1):
             for col in range(1, Board.boardWidth+1):
                     painter.save()
-
                     # Set the Col and Row values
                     colTransformation = self.squareWidth() * col
                     rowTransformation = self.squareHeight() * row
@@ -119,7 +123,6 @@ class Board(QFrame):  # base the board on a QFrame widget
                         pass
                     else:
                         painter.fillRect(col, row, int(self.squareWidth()), int(self.squareHeight()),brush)
-
                     # Make small circles
                     radius = int((10- 2) / 2)
                     center = QPoint(radius, radius)
@@ -172,4 +175,3 @@ class Board(QFrame):  # base the board on a QFrame widget
         # Draw the circle on top of the top-left corner of the box
         painter.setBrush(QBrush(QColor(255, 0, 0)))  # Set brush color to red (you can choose your color)
         painter.drawEllipse(int(self.posX), int(self.posY), int(2 * radius), int(2 * radius))
-

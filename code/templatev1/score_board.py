@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QLabel
-from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import pyqtSlot, Qt
 
 
 class ScoreBoard(QDockWidget):
