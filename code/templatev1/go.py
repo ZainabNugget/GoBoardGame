@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget, QGridLayout
+from PyQt6.QtWidgets import QApplication, QMainWindow, QDockWidget, QGridLayout, QPushButton
 from PyQt6.QtCore import Qt
 
 from board import Board
@@ -30,7 +30,7 @@ class Go(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.scoreBoard)
         self.scoreBoard.make_connection(self.board)
 
-        self.resize(800, 800)
+        self.resize(700, 700)
         self.center()
         self.setWindowTitle('Go')
         self.show()
