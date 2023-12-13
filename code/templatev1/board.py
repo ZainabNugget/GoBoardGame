@@ -12,6 +12,7 @@ class Board(QFrame):  # base the board on a QFrame widget
     # TODO set the board width and height to be square
     boardWidth = 7  # board is 0 squares wide # TODO this needs updating
     boardHeight = 7  #
+    mouseClicked = False
     timerSpeed = 1000  # the timer updates every 1 second
     counter = 20  # the number the counter will count down from
     posX = 0
@@ -82,11 +83,13 @@ class Board(QFrame):  # base the board on a QFrame widget
         '''paints the board and the pieces of the game'''
         painter = QPainter(self)
         self.drawBoardSquares(painter)
-        self.drawPieces(painter)
-        self.placePiece(painter)
+        # self.drawPieces(painter)
+        if(self.mouseClicked):
+            self.placePiece(painter)
 
     def mousePressEvent(self, event:QMouseEvent):
         '''this event is automatically called when the mouse is pressed'''
+        self.mouseClicked = True
         x = event.position().x() # x position of mouse click
         y = event.position().y() # y position of mouse click
         self.posX = event.position().x()
@@ -108,7 +111,6 @@ class Board(QFrame):  # base the board on a QFrame widget
     def tryMove(self, newX, newY):
         '''tries to move a piece'''
         if(self.gameLogic.checkEmpty(newX, newY)):
-            self.gameLogic.updateTurn()
             return True
         else:  # Implement this method according to your logic
             return False
@@ -152,25 +154,26 @@ class Board(QFrame):  # base the board on a QFrame widget
             for col in range(0, len(self.boardArray[0])):
                 # # TODO draw some pieces as ellipses
                 # # TODO choose your color and set the painter brush to the correct color
+                if(not Piece.NoPiece):
                     painter.save()
                     colTransformation = self.squareWidth() * col
                     rowTransformation = self.squareHeight() * row
                     painter.translate(colTransformation, rowTransformation)
-                    color = QColor(Qt.transparent)  # set the color is unspecified
+                    color = QColor(0,0,0)  # set the color is unspecified
 
                     if self.boardArray[col][row] == Piece.NoPiece:  # if piece in array == 0
                         color = QColor(0,20,20)  # color is transparent
                     elif self.boardArray[col][row] == Piece.White:  # if piece in array == 1
                         color = QColor(255,255,255)  # set color to white
-                    # if self.boardArray[col][row] == Piece.Black:  # if piece in array == 2
-                    #     color = QColor(0,0,0)  # set color to black
+                    elif self.boardArray[col][row] == Piece.Black:  # if piece in array == 2
+                        color = QColor(0,0,0)  # set color to black
 
                     painter.setPen(color)  # set pen color to painter
                     painter.setBrush(color)  # set brush color to painter
                     painter.translate(self.squareWidth(), self.squareHeight())
                     radius = int((40 - 2) / 2)
                     center = QPoint(col, row)
-                    if (row == Board.boardWidth or col == Board.boardHeight):
+                    if (row == Board.boardWidth or col == Board.boardHeight or self.boardArray[row][col] == Piece.NoPiece):
                         pass
                     else:
                         painter.drawEllipse(center, radius, radius)
@@ -178,20 +181,26 @@ class Board(QFrame):  # base the board on a QFrame widget
 
     def placePiece(self,painter):
         # Calculate the radius of the circle
-        radius = min(self.squareWidth(), self.squareHeight()) / 4
+        radius = int((40 - 2) / 2)
 
-        col =int(self.posX/self.squareWidth())
-        row =int(self.posY/self.squareHeight())
+        col =round(self.posX/self.squareWidth())
+        row =round(self.posY/self.squareHeight())
         # Draw the circle on top of the top-left corner of the box
-
+        print(self.squareWidth(),(row),col)
         colTransformation = self.squareWidth() * col
         rowTransformation = self.squareHeight() * row
-        painter.translate(col, row)
-        painter.setBrush(QBrush(QColor(255, 255, 255)))  # Set brush color to red (you can choose your color)
+        if(col >= 7):
+            col = 6
+        if(row >= 7):
+            row = 6
+        painter.translate(row, col)
+        if(self.gameLogic.currentPlayer == Piece.White):
+            painter.setBrush(QBrush(QColor(255, 255, 255)))  # Set brush color to red (you can choose your color)
+        else:
+            painter.setBrush(QBrush(QColor(0, 0, 0)))
         center = QPoint(int(colTransformation), int(rowTransformation))
-
-        if(self.tryMove(col, row)):
-            painter.drawEllipse(center, int(2 * radius), int(2 * radius))
-            self.boardArray[col-1][row-1] = Piece.White
-            self.printBoardArray()
-            self.drawPieces(painter)
+        painter.drawEllipse(center, int(radius), int(radius))
+        print(row, col)
+        # self.boardArray[row-1][col-1] = self.gameLogic.currentPlayer
+        self.printBoardArray()
+        self.drawPieces(painter)

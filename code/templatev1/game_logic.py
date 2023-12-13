@@ -32,13 +32,10 @@ class GameLogic:
         self.y = y
 
     def checkEmpty(self, x, y): #checks if the array is '0'
-        if(x >= len(self.boardArray) | y >= len(self.boardArray)):
-            print(x, " ", y)
+        if(self.boardArray[x][y] != Piece.NoPiece):
             return False
-        elif(self.boardArray[x][y] == Piece.NoPiece):
-            return True
         else:
-            return False
+            return True
 
     def updateTurn(self):
         if(self.currentPlayer == Piece.White):
