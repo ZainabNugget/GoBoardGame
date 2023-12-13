@@ -31,11 +31,11 @@ class GameLogic:
         self.x = x
         self.y = y
 
-    def checkEmpty(self, x, y): #checks if the array is '0'
-        if(self.boardArray[x][y] != Piece.NoPiece):
-            return False
-        else:
+    def checkEmpty(self, row, col): #checks if the array is '0'
+        if(self.boardArray[row][col] == Piece.NoPiece):
             return True
+        else:
+            return False
 
     def updateTurn(self):
         if(self.currentPlayer == Piece.White):
@@ -44,3 +44,6 @@ class GameLogic:
         else:
             self.currentPlayer = Piece.White
             print("White's turn")
+
+    def updateArray(self, row, col, object):
+        self.boardArray[row][col] = object

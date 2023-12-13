@@ -27,7 +27,7 @@ class Go(QMainWindow):
         self.scoreBoard.make_connection(self.board)
 
         self.createStatusBar()  # Added this line to create a status bar
-        self.resize(700, 700)
+        self.setFixedSize(650,650)
         self.center()
         self.setWindowTitle('Go')
         self.show()

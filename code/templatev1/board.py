@@ -9,6 +9,7 @@ from game_logic import GameLogic
 class Board(QFrame):  # base the board on a QFrame widget
     updateTimerSignal = pyqtSignal(int)  # signal sent when the timer is updated
     clickLocationSignal = pyqtSignal(str)  # signal sent when there is a new click location
+    showNotificationSignal = pyqtSignal(str)    # signal sent for notification message.
     # TODO set the board width and height to be square
     boardWidth = 7  # board is 0 squares wide # TODO this needs updating
     boardHeight = 7  #
@@ -108,11 +109,12 @@ class Board(QFrame):  # base the board on a QFrame widget
         '''clears pieces from the board'''
         # TODO write code to reset game
 
-    def tryMove(self, newX, newY):
+    def tryMove(self, row, col):
         '''tries to move a piece'''
-        if(self.gameLogic.checkEmpty(newX, newY)):
+        if(self.gameLogic.checkEmpty(row, col)):
             return True
         else:  # Implement this method according to your logic
+            self.showNotificationSignal.emit("Illegal Move")
             return False
 
     def drawBoardSquares(self, painter):
@@ -161,11 +163,11 @@ class Board(QFrame):  # base the board on a QFrame widget
                     painter.translate(colTransformation, rowTransformation)
                     color = QColor(0,0,0)  # set the color is unspecified
 
-                    if self.boardArray[col][row] == Piece.NoPiece:  # if piece in array == 0
+                    if self.boardArray[row][col] == Piece.NoPiece:  # if piece in array == 0
                         color = QColor(0,20,20)  # color is transparent
-                    elif self.boardArray[col][row] == Piece.White:  # if piece in array == 1
+                    elif self.boardArray[row][col] == Piece.White:  # if piece in array == 1
                         color = QColor(255,255,255)  # set color to white
-                    elif self.boardArray[col][row] == Piece.Black:  # if piece in array == 2
+                    elif self.boardArray[row][col] == Piece.Black:  # if piece in array == 2
                         color = QColor(0,0,0)  # set color to black
 
                     painter.setPen(color)  # set pen color to painter
@@ -180,27 +182,27 @@ class Board(QFrame):  # base the board on a QFrame widget
                     painter.restore()
 
     def placePiece(self,painter):
-        # Calculate the radius of the circle
-        radius = int((40 - 2) / 2)
 
-        col =round(self.posX/self.squareWidth())
-        row =round(self.posY/self.squareHeight())
-        # Draw the circle on top of the top-left corner of the box
-        print(self.squareWidth(),(row),col)
-        colTransformation = self.squareWidth() * col
-        rowTransformation = self.squareHeight() * row
-        if(col >= 7):
-            col = 6
-        if(row >= 7):
-            row = 6
-        painter.translate(row, col)
-        if(self.gameLogic.currentPlayer == Piece.White):
-            painter.setBrush(QBrush(QColor(255, 255, 255)))  # Set brush color to red (you can choose your color)
+        col =int(self.posX/self.squareWidth())
+        row =int(self.posY/self.squareHeight())
+        print(col, row)
+
+        if(col <= 0): col = 1
+        if(row <= 0): row = 1
+
+        if (col >= 7): col = 7
+        if (row >= 7): row = 7
+
+        if(self.tryMove(row-1,col-1)):
+            print("Legal move!")
+            if(self.gameLogic.currentPlayer == Piece.White):
+                self.gameLogic.updateArray(row-1, col-1, Piece.White)
+            else:
+                self.gameLogic.updateArray( row-1, col-1, Piece.Black)
+            self.gameLogic.updateTurn()
         else:
-            painter.setBrush(QBrush(QColor(0, 0, 0)))
-        center = QPoint(int(colTransformation), int(rowTransformation))
-        painter.drawEllipse(center, int(radius), int(radius))
+            print("Illegal Move!")
+
         print(row, col)
-        # self.boardArray[row-1][col-1] = self.gameLogic.currentPlayer
         self.printBoardArray()
         self.drawPieces(painter)
