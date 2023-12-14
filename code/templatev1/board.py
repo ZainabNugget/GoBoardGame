@@ -9,13 +9,17 @@ from game_logic import GameLogic
 class Board(QFrame):  # base the board on a QFrame widget
     updateTimerSignal = pyqtSignal(int)  # signal sent when the timer is updated
     clickLocationSignal = pyqtSignal(str)  # signal sent when there is a new click location
+    displayTurn = pyqtSignal(int)
+    updateTerritories = pyqtSignal(int)
+    updatePrisoners = pyqtSignal(int)
     showNotificationSignal = pyqtSignal(str)    # signal sent for notification message.
+
     # TODO set the board width and height to be square
     boardWidth = 7  # board is 0 squares wide # TODO this needs updating
     boardHeight = 7  #
     mouseClicked = False
     timerSpeed = 1000  # the timer updates every 1 second
-    counter = 20  # the number the counter will count down from
+    counter = 120  # the number the counter will count down from
     posX = 0
     posY = 0
 
@@ -32,12 +36,13 @@ class Board(QFrame):  # base the board on a QFrame widget
         self.timer.timeout.connect(self.timerEvent)  # connect timeout signal to timerEvent method
         self.isStarted = False  # game is not currently started
         self.start()  # start the game which will start the timer
-
         # TODO - create a 2d int/Piece array to store the state of the game
         rows, cols = (self.boardWidth, self.boardHeight)
         self.boardArray = [[Piece.NoPiece] * cols for _ in range(rows)]
         self.printBoardArray()    # TODO - uncomment this method after creating the array above
+        self.gameLogic.liberties = [cols for _ in range(rows)]
         self.gameLogic.boardArray = self.boardArray
+        self.gameLogic.updateLiberties()
         # print(self.gameLogic.checkEmpty())
 
     def printBoardArray(self):
@@ -67,6 +72,10 @@ class Board(QFrame):  # base the board on a QFrame widget
     def timerEvent(self):
         if self.counter == 0:
             self.endGame()
+            if(self.gameLogic.currentPlayer == Piece.Black):
+                QMessageBox.information(self, "Game Over", "Black Lost!")
+            else:
+                QMessageBox.information(self, "Game Over", "White Lost!")
         else:
             self.counter -= 1
             print('timerEvent()', self.counter)
@@ -103,7 +112,7 @@ class Board(QFrame):  # base the board on a QFrame widget
     def endGame(self):
         self.isStarted = False
         self.timer.stop()
-        QMessageBox.information(self, "Game Over", "Time's up! Game over.")
+        # QMessageBox.information(self, "Game Over", "Time's up! Game over.")
 
     def resetGame(self):
         '''clears pieces from the board'''
@@ -199,10 +208,17 @@ class Board(QFrame):  # base the board on a QFrame widget
                 self.gameLogic.updateArray(row-1, col-1, Piece.White)
             else:
                 self.gameLogic.updateArray( row-1, col-1, Piece.Black)
+            self.gameLogic.updateLiberties()
             self.gameLogic.updateTurn()
+            self.displayTurn.emit(self.gameLogic.currentPlayer)
+            self.resetCounter()
+            self.updateTimerSignal.emit(self.counter)
         else:
             print("Illegal Move!")
 
         print(row, col)
         self.printBoardArray()
         self.drawPieces(painter)
+
+    def resetCounter(self):
+        self.counter = 120
