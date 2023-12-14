@@ -18,7 +18,7 @@ class Board(QFrame):  # base the board on a QFrame widget
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.initBoard()
+        #self.initBoard()
 
     def initBoard(self):
         '''initiates board'''
@@ -29,7 +29,7 @@ class Board(QFrame):  # base the board on a QFrame widget
 
         # TODO - create a 2d int/Piece array to store the state of the game
         rows, cols = (self.boardWidth, self.boardHeight)
-        self.boardArray = [[0] * cols] * rows
+        self.boardArray = [[Piece.NoPiece] * cols for _ in range(rows)]
         self.printBoardArray()    # TODO - uncomment this method after creating the array above
 
     def printBoardArray(self):
@@ -93,6 +93,8 @@ class Board(QFrame):  # base the board on a QFrame widget
     def resetGame(self):
         '''clears pieces from the board'''
         # TODO write code to reset game
+        self.resetboardArray = [[0 for self.boardHeight in range(7)] for self.boardWidth in range(7)]
+        print("reset board" + self.resetboardArray)
 
     def tryMove(self, newX, newY):
         '''tries to move a piece'''
@@ -121,7 +123,7 @@ class Board(QFrame):  # base the board on a QFrame widget
                         painter.fillRect(col, row, int(self.squareWidth()), int(self.squareHeight()),brush)
 
                     # Make small circles
-                    radius = int((10- 2) / 2)
+                    radius = int((5 - 2) / 2)
                     center = QPoint(radius, radius)
                     painter.drawEllipse(center, radius, radius)
                     painter.restore()
