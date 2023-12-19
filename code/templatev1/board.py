@@ -93,8 +93,15 @@ class Board(QFrame):  # base the board on a QFrame widget
     def resetGame(self):
         '''clears pieces from the board'''
         # TODO write code to reset game
-        self.resetboardArray = [[0 for self.boardHeight in range(7)] for self.boardWidth in range(7)]
-        print("reset board" + self.resetboardArray)
+        self.boardArray = [[0 for self.boardHeight in range(7)] for self.boardWidth in range(7)]
+        print("reset board" + self.boardArray)
+
+        '''
+        for row in range(self.boardHeight):
+            for col in range(self.boardWidth):
+            self.boardArray[row][col] = Piece.NoPiece
+        self.printBoardArray
+        '''
 
     def tryMove(self, newX, newY):
         '''tries to move a piece'''
