@@ -23,6 +23,7 @@ class ScoreBoard(QDockWidget):
         self.mainLayout = QVBoxLayout()
 
         # create two labels which will be updated by signals
+        self.label_instructions = QLabel("Instructions\n 1. Click any where to place\n a piece \n 2. Press P to pass a turn \n 3. Press R to reset the Game")
         self.label_clickLocation = QLabel("Click Location: ")
         self.label_currentplayer = QLabel("Current player: ")
         self.label_timeRemaining = QLabel("Time remaining: ")
@@ -32,6 +33,7 @@ class ScoreBoard(QDockWidget):
         self.label_blackterritories = QLabel("Black prisoners: ")
 
         self.mainWidget.setLayout(self.mainLayout)
+        self.mainLayout.addWidget(self.label_instructions)
         self.mainLayout.addWidget(self.label_clickLocation)
         self.mainLayout.addWidget(self.label_timeRemaining)
         self.mainLayout.addWidget(self.label_currentplayer)

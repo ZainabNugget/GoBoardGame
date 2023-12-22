@@ -15,7 +15,7 @@ class Board(QFrame):  # base the board on a QFrame widget
     showNotificationSignal = pyqtSignal(str)    # signal sent for notification message.
 
     # TODO set the board width and height to be square
-    boardWidth = 7  # board is 0 squares wide # TODO this needs updating
+    boardWidth = 7
     boardHeight = 7  #
     mouseClicked = False
     timerSpeed = 1000  # the timer updates every 1 second
@@ -36,14 +36,13 @@ class Board(QFrame):  # base the board on a QFrame widget
         self.timer.timeout.connect(self.timerEvent)  # connect timeout signal to timerEvent method
         self.isStarted = False  # game is not currently started
         self.start()  # start the game which will start the timer
+
         # TODO - create a 2d int/Piece array to store the state of the game
-        rows, cols = (self.boardWidth, self.boardHeight)
-        self.boardArray = [[Piece.NoPiece] * cols for _ in range(rows)]
-        self.printBoardArray()    # TODO - uncomment this method after creating the array above
-        self.gameLogic.liberties = [cols for _ in range(rows)]
+        rows, cols = (7,7)
+        self.boardArray = [[Piece().color] * cols for _ in range(rows)]
         self.gameLogic.boardArray = self.boardArray
-        self.gameLogic.updateLiberties()
-        # print(self.gameLogic.checkEmpty())
+
+        self.printBoardArray()    # TODO - uncomment this method after creating the array above
 
     def printBoardArray(self):
         '''prints the boardArray in an attractive way'''
@@ -111,17 +110,25 @@ class Board(QFrame):  # base the board on a QFrame widget
 
     def endGame(self):
         self.isStarted = False
+        self.resetGame()
         self.timer.stop()
         # QMessageBox.information(self, "Game Over", "Time's up! Game over.")
 
     def resetGame(self):
         '''clears pieces from the board'''
         # TODO write code to reset game
+        self.gameLogic.currentPlayer = Piece.Black
+        self.boardArray = [[0 for self.boardHeight in range(7)] for self.boardWidth in range(7)]
+        print("Game was reset.")
+
 
     def tryMove(self, row, col):
         '''tries to move a piece'''
         if(self.gameLogic.checkEmpty(row, col)):
-            return True
+            if self.gameLogic.suicideRule(row, col):
+                return False
+            else:
+                return True
         else:  # Implement this method according to your logic
             self.showNotificationSignal.emit("Illegal Move")
             return False
@@ -194,7 +201,6 @@ class Board(QFrame):  # base the board on a QFrame widget
 
         col =int(self.posX/self.squareWidth())
         row =int(self.posY/self.squareHeight())
-        print(col, row)
 
         if(col <= 0): col = 1
         if(row <= 0): row = 1
@@ -202,23 +208,35 @@ class Board(QFrame):  # base the board on a QFrame widget
         if (col >= 7): col = 7
         if (row >= 7): row = 7
 
-        if(self.tryMove(row-1,col-1)):
+        row -= 1
+        col -= 1
+
+        if self.tryMove(row, col):
             print("Legal move!")
-            if(self.gameLogic.currentPlayer == Piece.White):
-                self.gameLogic.updateArray(row-1, col-1, Piece.White)
-            else:
-                self.gameLogic.updateArray( row-1, col-1, Piece.Black)
+            # Enter based on the current player
+            self.gameLogic.updateArray(row, col)
+
+            # Update everything after successful placement
             self.gameLogic.updateLiberties()
             self.gameLogic.updateTurn()
-            self.displayTurn.emit(self.gameLogic.currentPlayer)
+
+            print("Black captured: ", self.gameLogic.capturedBlack)
+            print("White captured: ", self.gameLogic.capturedWhite)
+
             self.resetCounter()
+            # Update timers and turn
+            self.displayTurn.emit(self.gameLogic.currentPlayer)
             self.updateTimerSignal.emit(self.counter)
+
+            # Print both arrays
+            self.printBoardArray()
+            self.gameLogic.printLibertyArray()
+            self.gameLogic.capture()
+            self.drawPieces(painter)
         else:
             print("Illegal Move!")
+            self.drawPieces(painter)
 
-        print(row, col)
-        self.printBoardArray()
-        self.drawPieces(painter)
 
     def resetCounter(self):
         self.counter = 120
