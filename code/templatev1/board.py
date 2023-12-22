@@ -9,12 +9,17 @@ from game_logic import GameLogic
 class Board(QFrame):  # base the board on a QFrame widget
     updateTimerSignal = pyqtSignal(int)  # signal sent when the timer is updated
     clickLocationSignal = pyqtSignal(str)  # signal sent when there is a new click location
+    displayTurn = pyqtSignal(int)
+    updateTerritories = pyqtSignal(int)
+    updatePrisoners = pyqtSignal(int)
+    showNotificationSignal = pyqtSignal(str)    # signal sent for notification message.
+
     # TODO set the board width and height to be square
-    boardWidth = 7  # board is 0 squares wide # TODO this needs updating
+    boardWidth = 7
     boardHeight = 7  #
     mouseClicked = False
     timerSpeed = 1000  # the timer updates every 1 second
-    counter = 20  # the number the counter will count down from
+    counter = 120  # the number the counter will count down from
     posX = 0
     posY = 0
 
@@ -33,11 +38,11 @@ class Board(QFrame):  # base the board on a QFrame widget
         self.start()  # start the game which will start the timer
 
         # TODO - create a 2d int/Piece array to store the state of the game
-        rows, cols = (self.boardWidth, self.boardHeight)
-        self.boardArray = [[Piece.NoPiece] * cols for _ in range(rows)]
-        self.printBoardArray()    # TODO - uncomment this method after creating the array above
+        rows, cols = (7,7)
+        self.boardArray = [[Piece().color] * cols for _ in range(rows)]
         self.gameLogic.boardArray = self.boardArray
-        # print(self.gameLogic.checkEmpty())
+
+        self.printBoardArray()    # TODO - uncomment this method after creating the array above
 
     def printBoardArray(self):
         '''prints the boardArray in an attractive way'''
@@ -66,6 +71,10 @@ class Board(QFrame):  # base the board on a QFrame widget
     def timerEvent(self):
         if self.counter == 0:
             self.endGame()
+            if(self.gameLogic.currentPlayer == Piece.Black):
+                QMessageBox.information(self, "Game Over", "Black Lost!")
+            else:
+                QMessageBox.information(self, "Game Over", "White Lost!")
         else:
             self.counter -= 1
             print('timerEvent()', self.counter)
@@ -101,18 +110,27 @@ class Board(QFrame):  # base the board on a QFrame widget
 
     def endGame(self):
         self.isStarted = False
+        self.resetGame()
         self.timer.stop()
-        QMessageBox.information(self, "Game Over", "Time's up! Game over.")
+        # QMessageBox.information(self, "Game Over", "Time's up! Game over.")
 
     def resetGame(self):
         '''clears pieces from the board'''
         # TODO write code to reset game
+        self.gameLogic.currentPlayer = Piece.Black
+        self.boardArray = [[0 for self.boardHeight in range(7)] for self.boardWidth in range(7)]
+        print("Game was reset.")
 
-    def tryMove(self, newX, newY):
+
+    def tryMove(self, row, col):
         '''tries to move a piece'''
-        if(self.gameLogic.checkEmpty(newX, newY)):
-            return True
+        if(self.gameLogic.checkEmpty(row, col)):
+            if self.gameLogic.suicideRule(row, col):
+                return False
+            else:
+                return True
         else:  # Implement this method according to your logic
+            self.showNotificationSignal.emit("Illegal Move")
             return False
 
     def drawBoardSquares(self, painter):
@@ -161,11 +179,11 @@ class Board(QFrame):  # base the board on a QFrame widget
                     painter.translate(colTransformation, rowTransformation)
                     color = QColor(0,0,0)  # set the color is unspecified
 
-                    if self.boardArray[col][row] == Piece.NoPiece:  # if piece in array == 0
+                    if self.boardArray[row][col] == Piece.NoPiece:  # if piece in array == 0
                         color = QColor(0,20,20)  # color is transparent
-                    elif self.boardArray[col][row] == Piece.White:  # if piece in array == 1
+                    elif self.boardArray[row][col] == Piece.White:  # if piece in array == 1
                         color = QColor(255,255,255)  # set color to white
-                    elif self.boardArray[col][row] == Piece.Black:  # if piece in array == 2
+                    elif self.boardArray[row][col] == Piece.Black:  # if piece in array == 2
                         color = QColor(0,0,0)  # set color to black
 
                     painter.setPen(color)  # set pen color to painter
@@ -180,27 +198,45 @@ class Board(QFrame):  # base the board on a QFrame widget
                     painter.restore()
 
     def placePiece(self,painter):
-        # Calculate the radius of the circle
-        radius = int((40 - 2) / 2)
 
-        col =round(self.posX/self.squareWidth())
-        row =round(self.posY/self.squareHeight())
-        # Draw the circle on top of the top-left corner of the box
-        print(self.squareWidth(),(row),col)
-        colTransformation = self.squareWidth() * col
-        rowTransformation = self.squareHeight() * row
-        if(col >= 7):
-            col = 6
-        if(row >= 7):
-            row = 6
-        painter.translate(row, col)
-        if(self.gameLogic.currentPlayer == Piece.White):
-            painter.setBrush(QBrush(QColor(255, 255, 255)))  # Set brush color to red (you can choose your color)
+        col =int(self.posX/self.squareWidth())
+        row =int(self.posY/self.squareHeight())
+
+        if(col <= 0): col = 1
+        if(row <= 0): row = 1
+
+        if (col >= 7): col = 7
+        if (row >= 7): row = 7
+
+        row -= 1
+        col -= 1
+
+        if self.tryMove(row, col):
+            print("Legal move!")
+            # Enter based on the current player
+            self.gameLogic.updateArray(row, col)
+
+            # Update everything after successful placement
+            self.gameLogic.updateLiberties()
+            self.gameLogic.updateTurn()
+
+            print("Black captured: ", self.gameLogic.capturedBlack)
+            print("White captured: ", self.gameLogic.capturedWhite)
+
+            self.resetCounter()
+            # Update timers and turn
+            self.displayTurn.emit(self.gameLogic.currentPlayer)
+            self.updateTimerSignal.emit(self.counter)
+
+            # Print both arrays
+            self.printBoardArray()
+            self.gameLogic.printLibertyArray()
+            self.gameLogic.capture()
+            self.drawPieces(painter)
         else:
-            painter.setBrush(QBrush(QColor(0, 0, 0)))
-        center = QPoint(int(colTransformation), int(rowTransformation))
-        painter.drawEllipse(center, int(radius), int(radius))
-        print(row, col)
-        # self.boardArray[row-1][col-1] = self.gameLogic.currentPlayer
-        self.printBoardArray()
-        self.drawPieces(painter)
+            print("Illegal Move!")
+            self.drawPieces(painter)
+
+
+    def resetCounter(self):
+        self.counter = 120
