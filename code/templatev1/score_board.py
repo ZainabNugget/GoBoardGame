@@ -17,6 +17,9 @@ class ScoreBoard(QDockWidget):
         '''initiates ScoreBoard UI'''
         self.resize(100, 200)
         self.setWindowTitle('ScoreBoard')
+        self.setStyleSheet('''
+            background-color: #808080
+        ''')
 
         # create a widget to hold other widgets
         self.mainWidget = QWidget()
@@ -28,7 +31,7 @@ class ScoreBoard(QDockWidget):
                                          "\n 2. Press 'Pass' to pass turn"
                                          "\n 3. Press 'Reset' to reset the Game"
                                          "\n Rules:"
-                                         "\n 1. You can only pass once,"
+                                         "\n 1. A player can only pass once,"
                                          "\n After two passes, the game ends")
         self.label_clickLocation = QLabel("Click Location: ")
         self.label_notification = QLabel("")

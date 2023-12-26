@@ -36,6 +36,9 @@ class Board(QFrame):  # base the board on a QFrame widget
         self.initBoard()
 
     def initBoard(self):
+        self.setStyleSheet('''
+        background-color: #5e3f20
+        ''')
         '''initiates board'''
         self.timer = QTimer(self)  # create a timer for the game
         self.timer.timeout.connect(self.timerEvent)  # connect timeout signal to timerEvent method
