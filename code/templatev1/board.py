@@ -25,7 +25,9 @@ class Board(QFrame):  # base the board on a QFrame widget
     previousX = 0
     previousY = 0
 
-    board_history = []
+    board_hist = []
+    undo_history = []
+    redo_move = []
 
     playerPassCount = 0
 
@@ -47,8 +49,9 @@ class Board(QFrame):  # base the board on a QFrame widget
 
         # TODO - create a 2d int/Piece array to store the state of the game
         rows, cols = (7, 7)
-        self.boardArray = [[Piece().color] * cols for _ in range(rows)]
+        self.boardArray = [[Piece.NoPiece] * cols for _ in range(rows)]
         self.gameLogic.boardArray = self.boardArray
+        self.copy_board()
 
         self.printBoardArray()  # TODO - uncomment this method after creating the array above
 
@@ -78,10 +81,10 @@ class Board(QFrame):  # base the board on a QFrame widget
         if self.tryMove(row, col):  # check for suicide and for vacancy
             self.placePiece(row, col)  # place the piece on the board
             strin = "Placed a move at row" + str(row) + " col " + str(col)
+            self.undo_history.append([row, col])  # use the history in board to return the move
+            self.redo_move = []  # clear the redo history
+            print(self.undo_history)
             self.showNotificationSignal.emit(strin)
-        else:
-            # self.showNotificationSignal.emit("Illegal Move, Try Another!")  # Display an error message
-            pass
 
         self.gameLogic.updateScores()
         self.update()
@@ -147,6 +150,12 @@ class Board(QFrame):  # base the board on a QFrame widget
         # TODO write code to reset game
         self.boardArray = [[Piece.NoPiece for self.boardHeight in range(7)] for self.boardWidth in range(7)]
         self.gameLogic.currentPlayer = Piece.Black
+
+        # Reset all scores
+        self.undo_history = []
+        self.redo_move = []
+        self.gameLogic.capturedBlack = 0
+        self.gameLogic.capturedWhite = 0
         self.gameLogic.whiteTerritory = 0
         self.gameLogic.blackTerritory = 0
         self.update()
@@ -181,11 +190,30 @@ class Board(QFrame):  # base the board on a QFrame widget
             self.showNotificationSignal.emit("Illegal Move.")
             return False
 
-    def copy_board(self, board):
-        board_copy = ([row[:] for row in board])
-        print("copy board:")
-        print('\n'.join(['\t'.join([str(cell) for cell in row]) for row in board_copy]))
-        self.board_history = board_copy
+    def undo(self):
+        if self.undo_history:  # checks if there are any in the history
+            row, col = self.undo_history.pop()  # get the first element and reverse
+            self.redo_move.append([row, col, self.gameLogic.currentPlayer])
+            self.boardArray[row][col] = Piece.NoPiece  # clear the spot
+            self.gameLogic.updateTurn()  # return to the other player
+            self.displayTurn.emit(self.gameLogic.currentPlayer)  # change the display
+            self.update()  # update the program
+        else:
+            self.showNotificationSignal.emit("No history to undo from!")
+
+    def redo(self):
+        if self.redo_move:
+            row, col, player= self.redo_move.pop()
+            if player == Piece.Black:
+                player = Piece.White
+            else:
+                player = Piece.Black
+            self.boardArray[row][col] = player
+            self.gameLogic.updateTurn()
+            self.displayTurn.emit(self.gameLogic.currentPlayer)  # change the display
+            self.update()
+        else:
+            self.showNotificationSignal.emit("No redo history!")
 
     def drawBoardSquares(self, painter):  # Creates the general board layout of the game
         '''draw all the square on the board'''
@@ -250,6 +278,7 @@ class Board(QFrame):  # base the board on a QFrame widget
                     else:
                         painter.drawEllipse(center, radius, radius)
                     painter.restore()
+                    self.update()
 
     def placePiece(self, row, col):
 
@@ -270,9 +299,13 @@ class Board(QFrame):  # base the board on a QFrame widget
 
         # Print both arrays
         self.printBoardArray()
+
+        # copy the board history into an array
+        self.board_history()
         self.gameLogic.capture()
         self.gameLogic.captureMultiple(row, col)
         self.updatePrisoners.emit(self.gameLogic.capturedWhite, self.gameLogic.capturedBlack)
+        self.update()
 
     def resetCounter(self):
         self.counter = 120
@@ -287,3 +320,28 @@ class Board(QFrame):  # base the board on a QFrame widget
             self.update()
         self.gameLogic.updateTurn()
         self.displayTurn.emit(self.gameLogic.currentPlayer)
+
+    def copy_board(self):
+        ''' A method to store and return the current state of the board '''
+        rows, cols = (7,7)
+        copy_board = [[Piece.NoPiece] * cols for _ in range(rows)] # nested loop of Stone class to the size of board range.
+        rowindex = 0
+        for row in self.boardArray:
+            colindex = 0
+            for cell in row:
+                if cell == Piece.White:
+                    copy_board[rowindex][colindex] = Piece.White # places the current value of white stone to the copyofboard row and col index
+                elif cell == Piece.Black:
+                    copy_board[rowindex][colindex] = Piece.Black # places the current value of black stone to the copyofboard row and col index
+                else:
+                    pass
+                colindex = colindex + 1  # increment col index
+            rowindex = rowindex + 1  # increment row index
+        return copy_board
+
+    def board_history(self):
+        self.board_hist.append(self.copy_board())
+        print(self.board_hist)
+
+    def ko(self):
+        pass

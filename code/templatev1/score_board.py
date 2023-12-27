@@ -91,6 +91,8 @@ class ScoreBoard(QDockWidget):
         board.showNotificationSignal.connect(self.updateNotification)  # update notifications
         self.passBtn.clicked.connect(board.passTurn)  # connects to a method from board
         self.resetBtn.clicked.connect(board.resetGame)  # connects to a method to reset the game
+        self.undo.clicked.connect(board.undo)
+        self.redo.clicked.connect(board.redo)
 
     @pyqtSlot(str)  # checks to make sure that the following slot is receiving an argument of the type 'int'
     def setClickLocation(self, clickLoc):
