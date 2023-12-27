@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QFrame, QMessageBox
 from PyQt6.QtCore import QTimer, pyqtSignal, QPoint
-from PyQt6.QtGui import QPainter, QColor, QBrush, QMouseEvent
+from PyQt6.QtGui import QPainter, QColor, QBrush
 from PyQt5.QtCore import Qt
 from piece import Piece
 from game_logic import GameLogic
@@ -25,6 +25,7 @@ class Board(QFrame):  # base the board on a QFrame widget
     previousX = 0
     previousY = 0
 
+    previous_board = []
     board_hist = []
     undo_history = []
     redo_move = []
@@ -97,12 +98,20 @@ class Board(QFrame):  # base the board on a QFrame widget
         '''returns the height of one square of the board'''
         return self.contentsRect().height() / 8
 
+    '''
+    Message popup to declare the winner
+    '''
     def playerWon(self):
         if (self.gameLogic.currentPlayer == Piece.Black):
             QMessageBox.information(self, "Game Over", "Black Lost!")
         else:
             QMessageBox.information(self, "Game Over", "White Lost!")
 
+    '''
+    - When the counter is 0, declare a winner
+    - When there is a new player, we reset the counter
+    to 120s
+    '''
     def timerEvent(self):
         if self.counter == 0:
             self.endGame()
@@ -138,13 +147,25 @@ class Board(QFrame):  # base the board on a QFrame widget
         self.mousePosToColRow(event)  # a method that converts the mouse click to a row and col.
         self.clickLocationSignal.emit(clickLoc)
 
+    '''
+    To end the game
+    - Reset game
+    - Stop timers
+    - Declare winner
+    '''
     def endGame(self):
         self.isStarted = False
         self.resetGame()
         self.timer.stop()
         self.winner()
         self.showNotificationSignal.emit("Game's Over!")
-
+    '''
+    To reset the game:
+    - Clear the array
+    - Change the player to Black
+    - reset all scores 
+    - update the program
+    '''
     def resetGame(self):  # resets the game by clearing the array and resetting the player
         '''clears pieces from the board'''
         # TODO write code to reset game
@@ -162,6 +183,9 @@ class Board(QFrame):  # base the board on a QFrame widget
         print("Game was reset.")
 
     # TODO Win conditions
+    '''
+    Get the winner based on the higher score
+    '''
     def winner(self):  # compare scores and give a winner!
         if self.gameLogic.whiteScore > self.gameLogic.blackScore:
             self.winDeclaration(Piece.White)
@@ -178,7 +202,11 @@ class Board(QFrame):  # base the board on a QFrame widget
             QMessageBox.information(self, "Game Over", "Black Won!")
         else:
             QMessageBox.information(self, "Game Over", "White Won!")
-
+    '''
+    Before a piece is placed:
+    - Check if the spot is empty
+    - Check for suicide
+    '''
     def tryMove(self, row, col):  # does the necessary checks for placing a stone
         '''tries to move a piece'''
         if self.gameLogic.checkEmpty(row, col):
@@ -190,6 +218,14 @@ class Board(QFrame):  # base the board on a QFrame widget
             self.showNotificationSignal.emit("Illegal Move.")
             return False
 
+    '''
+    The undo and redo method uses stacks
+    Undo:
+    - add in previous moves, whenever a move is done
+    - add it to a redo history stack in case of a redo
+    - update turn to go back to the original player
+    - update the program, to reprint the piece
+    '''
     def undo(self):
         if self.undo_history:  # checks if there are any in the history
             row, col = self.undo_history.pop()  # get the first element and reverse
@@ -200,7 +236,13 @@ class Board(QFrame):  # base the board on a QFrame widget
             self.update()  # update the program
         else:
             self.showNotificationSignal.emit("No history to undo from!")
-
+    '''
+    Redo:
+    - take the first row, col from the stack
+    - add the previous player to the row,col
+    - update turn to move to the next player
+    - update the program to print the piece
+    '''
     def redo(self):
         if self.redo_move:
             row, col, player= self.redo_move.pop()
@@ -280,9 +322,19 @@ class Board(QFrame):  # base the board on a QFrame widget
                     painter.restore()
                     self.update()
 
+    '''
+    The logic behind placing a piece
+    - updates the array 
+    - updates the territory scores 
+    - updates the turn 
+    - resets timer for the player 
+    - updates any captures that happen
+    - updates the prisoners score
+    '''
     def placePiece(self, row, col):
 
         # Enter based on the current player
+        self.previous_board = self.copy_board()  # copy the board into the previous board var
         self.gameLogic.updateArray(row, col)
         self.gameLogic.updateTerritory()
         self.updateTerritories.emit(self.gameLogic.whiteTerritory, self.gameLogic.blackTerritory)
@@ -303,7 +355,7 @@ class Board(QFrame):  # base the board on a QFrame widget
         # copy the board history into an array
         self.board_history()
         self.gameLogic.capture()
-        self.gameLogic.captureMultiple(row, col)
+        self.gameLogic.captureMultiple()
         self.updatePrisoners.emit(self.gameLogic.capturedWhite, self.gameLogic.capturedBlack)
         self.update()
 
@@ -311,6 +363,10 @@ class Board(QFrame):  # base the board on a QFrame widget
         self.counter = 120
 
     # TODO implement pass rule
+    '''
+    After either player passes a turn
+    if the count is 2, we end the game!
+    '''
     def passTurn(self):  # update the turn and increment count based on player
         self.playerPassCount += 1
         print(self.playerPassCount)
@@ -320,6 +376,17 @@ class Board(QFrame):  # base the board on a QFrame widget
             self.update()
         self.gameLogic.updateTurn()
         self.displayTurn.emit(self.gameLogic.currentPlayer)
+
+    '''
+    We attempted to create the KO rule, however,
+    our attempt was a failure and so we decided
+    not to include it in the final project, the
+    idea behind this code, is that there would be 
+    a copy of the board made, before a move is made
+    the ko method then checks if the current board
+    is equal to the previous board
+    
+    '''
 
     def copy_board(self):
         ''' A method to store and return the current state of the board '''
@@ -343,5 +410,8 @@ class Board(QFrame):  # base the board on a QFrame widget
         self.board_hist.append(self.copy_board())
         print(self.board_hist)
 
-    def ko(self):
-        pass
+    def ko(self, row, col):
+        temp_board = [row.copy() for row in self.boardArray]
+        temp_board[row][col] = self.gameLogic.currentPlayer
+
+        return self.previous_board == temp_board

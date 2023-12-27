@@ -1,9 +1,8 @@
 from PyQt6.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QLabel, QPushButton, QHBoxLayout
-from PyQt6.QtCore import pyqtSlot, Qt
+from PyQt6.QtCore import pyqtSlot
 
-from code.templatev1.board import Board
 from code.templatev1.game_logic import GameLogic
-from code.templatev1.piece import Piece
+
 
 
 class ScoreBoard(QDockWidget):
@@ -91,8 +90,8 @@ class ScoreBoard(QDockWidget):
         board.showNotificationSignal.connect(self.updateNotification)  # update notifications
         self.passBtn.clicked.connect(board.passTurn)  # connects to a method from board
         self.resetBtn.clicked.connect(board.resetGame)  # connects to a method to reset the game
-        self.undo.clicked.connect(board.undo)
-        self.redo.clicked.connect(board.redo)
+        self.undo.clicked.connect(board.undo)  # connects to an undo method from board
+        self.redo.clicked.connect(board.redo)  # connects to a redo method from board
 
     @pyqtSlot(str)  # checks to make sure that the following slot is receiving an argument of the type 'int'
     def setClickLocation(self, clickLoc):
